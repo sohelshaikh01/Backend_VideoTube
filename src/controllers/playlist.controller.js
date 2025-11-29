@@ -5,9 +5,15 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+
 // TODO: Create a new playlist.
 // 1. Extract name, description, and userId from req.body and req.user._id.
 // 2. Save the playlist.
+
+// 1. Get `{ title, description, isPrivate }` and `userId`.
+// 2. Validate fields.
+// 3. Create playlist with owner as `userId`.
+// 4. Return the created playlist.
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -30,24 +36,20 @@ const createPlaylist = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, playlist, "Playlist created successfully"));
-});
-// const playlistData = { name: 'My Playlist', description: 'Playlist description' };
-// fetch('/api/playlist', {
-//   method: 'POST',
-//   headers: {
-//     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-//     'Content-Type': 'application/json'
-//   },
-//   body: JSON.stringify(playlistData)
-// })
-//   .then(response => response.json())
-//   .then(data => console.log('Playlist Created:', data));
+}); 
+
 
 // TODO: Get a playlist by its ID.
 // 1. Extract playlistId from req.params.
 // 2. Use $lookup to populate videos with their details.
 
 // ----- Watch Videos in Return array, Check Array for each endpoint -----
+
+// 1. Get `playlistId` from request.
+// 2. Validate `playlistId`.
+// 3. Fetch playlist and populate video details.
+// 4. If `isPrivate` and user is not owner, return error.
+// 5. Return playlist with videos.
 
 const getPlaylistById = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
@@ -86,9 +88,16 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     );
 });
 
+ 
 // TODO: Update a playlist by its ID.
 // 1. Extract playlistId from req.params and updated fields from req.body.
 // 2. Use $set to update the document.
+
+// 1. Get `{ playlistId, title, description, isPrivate }`.
+// 2. Validate `playlistId`.
+// 3. Find playlist and check if user is owner.
+// 4. Update fields as provided.
+// 5. Save and return updated playlist.
 
 const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
@@ -125,9 +134,16 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     );
 });
 
+
 // TODO: Delete a playlist by its ID.
 // 1. Extract playlistId from req.params.
 // 2. Delete the document.
+
+// 1. Get `playlistId` from request.
+// 2. Validate `playlistId`.
+// 3. Check if user is owner of the playlist.
+// 4. Delete playlist from DB.
+// 5. Return deleted playlist ID or success message.
 
 const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
@@ -147,9 +163,16 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, playlist, "Playlist deleted successfully"));
 });
 
+
 // TODO: Add a video to a playlist.
 // 1. Extract videoId and playlistId from req.params.
 // 2. Use $addToSet to add the video if it doesn't already exist.
+
+// 1. Get `{ playlistId, videoId }` from request.
+// 2. Validate both IDs.
+// 3. Check if video already in playlist — if yes, return error.
+// 4. Push `videoId` into playlist's video list.
+// 5. Save and return updated playlist.
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { videoId, playlistId } = req.params;
@@ -189,9 +212,16 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
   //     );
 });
 
+
 // TODO: Remove a video from a playlist.
 // 1. Extract videoId and playlistId from req.params.
 // 2. Use $pull to remove the video.
+
+// 1. Get `{ playlistId, videoId }`.
+// 2. Validate IDs.
+// 3. Find playlist and remove the `videoId` from list.
+// 4. Save playlist.
+// 5. Return updated playlist or success message.
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { videoId, playlistId } = req.params;
@@ -241,9 +271,14 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     );
 });
 
+
 // TODO: Get all playlists for a user.
 // 1. Extract userId from req.params.
 // 2. Find playlists by owner field.
+
+// 1. Get `userId` from auth.
+// 2. Fetch all playlists created by this user.
+// 3. Return array of playlist objects.
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -267,7 +302,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, playlists, "Playlists Fetched Successfully"));
 });
-
 
 export {
   createPlaylist,

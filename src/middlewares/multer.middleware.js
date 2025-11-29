@@ -8,9 +8,7 @@ const storage = multer.diskStorage({
         cb(null, file.originalname);
     }
 });
-// Gives option to take 'req.files' or 'req.file' if single file have to access.
 
 export const upload = multer({
     storage
 });
-

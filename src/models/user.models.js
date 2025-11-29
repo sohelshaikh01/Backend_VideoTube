@@ -10,7 +10,7 @@ const userSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
-            index: true // for searching enable in field optimise
+            index: true
         },
         email: {
             type: String,
@@ -26,7 +26,7 @@ const userSchema = new Schema(
             index: true
         },
         avatar: {
-            type: String, // cloudinary url
+            type: String,
             required: true,
         },
         coverImage: {
@@ -49,24 +49,19 @@ const userSchema = new Schema(
     }, { timestamps: true }
 );
 
-// If any change in data reruns function and change the password.
-// Check the condition
+
 userSchema.pre("save", async function(next) {
-    // check is password modified or not
-    if(!this.isModified("password")) return next(); // this.password in string may problem
-        // On What to do and how many rounds
+    
+    if(!this.isModified("password")) return next();
+
         this.password = await bcrypt.hash(this.password, 10);
         next();
 });
-// don't use arrow function, it doesn't have `this` reference, 
-// here is must to know the context
 
 
-// Create method to decode password
+
 userSchema.methods.isPasswordCorrect = async function(password) {
     return await bcrypt.compare(password, this.password);
-    // result in true or false
-    // match and compare password
 }
 
 userSchema.methods.generateAccessToken = function() {

@@ -5,11 +5,26 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// When finding subscribed channels
+// get userId as user
+// get channelId as channel
+// insert the data
+// remove by channelId
     
 // TODO: Toggle subscription to a channel.
 // 1. Extract channelId from req.params and subscriberId from req.user._id.
 // 2. Use $or operator to check if the subscription already exists.
 // 3. If it exists, delete it. Otherwise, create a new subscription.
+
+// 1. Get `{ channelId }` and `userId` from request.
+// 2. Validate `channelId`.
+// 3. If already subscribed:
+
+//    * Remove subscription.
+// 4. Else:
+
+//    * Create a new subscription with `subscriberId = userId` and `channelId`.
+// 5. Return updated subscription status.
 
 const toggleSubscription = asyncHandler(async (req, res) => {
 
@@ -56,10 +71,18 @@ const toggleSubscription = asyncHandler(async (req, res) => {
   
 // --------- Both Controllers Remaining -----------
 
+// Get userId as user.
+// find as subscirber in table.
+
 // TODO: Get all channels a user is subscribed to.
 // 1. Extract subscriberId from req.user._id.
 // 2. Use $lookup to join Subscription collection with User collection.
 // 3. Use $match to filter by subscriberId.
+
+// 1. Get `userId` from auth.
+// 2. Fetch all subscriptions where `subscriberId = userId`.
+// 3. Populate channel info (username, avatar, etc.).
+// 4. Return list of subscribed channels.
 
 const getSubscribedChannels = asyncHandler(async (req, res) => {
 
@@ -115,11 +138,17 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         );
 });
 
-// Find Subscribers
+// Get user._id as channel
+// Find as channelId in table.
 // TODO: Get all subscribers of a channel.
 // 1. Extract channelId from req.params.
 // 2. Use $lookup to join Subscription collection with User collection.
 // 3. Use $match to filter by channelId.
+
+// 1. Get `userId` from auth.
+// 2. Fetch all subscriptions where `channelId = userId`.
+// 3. Count total subscribers.
+// 4. Return subscriber count and list of subscribers (optional).
 
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 

@@ -1,5 +1,5 @@
 import { v2 as cloudinary} from "cloudinary";
-import fs from "fs"; // file system by default in node.js
+import fs from "fs";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_KEY,
@@ -7,25 +7,22 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Doing more optimisly
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if(!localFilePath) return null;
 
-        // Upload the file on cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
         });
-        // file has been upload successful
+
         console.log("file has uploaded cloudinary", response.url);
-        // after upload remove
-        fs.unlinkSync(localFilePath);
+        
+        fs.unlinkSync(localFilePath); // upload -> remove local
         return response;
 
     } catch (error) {
-        // file comes on server but not uploaded
-        // So need to remove to not full storage
+        // On server not uploaded -> remove from storage
         try {
             if (fs.existsSync(localFilePath)) {
                 fs.unlinkSync(localFilePath);
@@ -33,10 +30,27 @@ const uploadOnCloudinary = async (localFilePath) => {
         } catch (fsError) {
             console.error("Failed to delete local file:", fsError);
         }
-        // remove the locally saved file as the upload operation go failed
         return null;
         
     }
 }
 
-export { uploadOnCloudinary };
+const removeFromCloudinary = async (cloudFileUrl) => {
+    try {
+        if(!cloudFileUrl) return null;
+
+        const reponse = await cloudinary.uploader.destroy(cloudFileUrl);
+
+        if(reponse) {
+            console.log("Failed to delete file in cloudinary");
+            return null;
+        }
+        console.log("Successfully deleted file in cloudinary");
+
+
+    } catch(error) {
+        console.log("Error while deleted file in cloudinary:", error);
+    }
+}
+
+export { uploadOnCloudinary, removeFromCloudinary };

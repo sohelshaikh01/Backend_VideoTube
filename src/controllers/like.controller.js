@@ -1,13 +1,30 @@
-import mongoose from "mongoose";
-import { Like } from "../models/like.models.js";
 
+import { Like } from "../models/like.models.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+
+// --- Properly show like status in frontend
 
 // TODO: Toggle like on a video.
 // 1. Extract videoId from req.params and userId from req.user._id.
 // 2. Use $or operator to check if the like already exists.
 // 3. If it exists, delete it. Otherwise, create a new like.
+
+// 1. Get `videoId` and `userId` from request.
+// 2. Validate `videoId`.
+// 3. Check if a like by `userId` for this `videoId` exists.
+
+//    * If yes, remove it (dislike).
+//    * If no, create a new like entry.
+// 4. Update total like count on video (optional).
+// 5. Return current like status or like object.
+
+// > ✅ **Frontend logic:**
+
+// * On page load: call an API to check if video is liked by user — show `Like` or `Liked` UI accordingly.
+// * On click: call toggle endpoint — update UI state instantly (optimistic update).
+
 const toggleVideoLike = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params; 
@@ -44,20 +61,16 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     }
     
 });
-// fetch(`/api/like/toggle/v/${videoId}`, {
-//   method: 'POST',
-//   headers: {
-//     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-//   }
-// })
-//   .then(response => response.json())
-//   .then(data => console.log('Video Liked/Unliked:', data));
 
 
 // TODO: Toggle like on a comment.
 // 1. Extract commentId from req.params and userId from req.user._id.
 // 2. Use $or operator to check if the like already exists.
 // 3. If it exists, delete it. Otherwise, create a new like.
+
+// * Same steps as `toggleVideoLike`, but with `commentId` instead of `videoId`.
+// * Update comment's like count if needed.
+// * Return updated like status.
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
@@ -95,10 +108,16 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 });
 
+
 // TODO: Toggle like on a tweet.
 // 1. Extract tweetId from req.params and userId from req.user._id.
 // 2. Use $or operator to check if the like already exists.
 // 3. If it exists, delete it. Otherwise, create a new like.
+
+// * Same logic as above but for `tweetId`.
+// * Toggle like based on presence.
+// * Return like status.
+
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const { tweetId } = req.params;
     const userId = req.user._id;
@@ -134,11 +153,18 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 });
 
+
 // TODO: Fetch all videos liked by the user.
 // 1. Extract userId from req.user._id.
 // 2. Use $lookup to join Like collection with Video collection.
 // 3. Use $match to filter by userId in the likeBy field.
 // 4. Project video details.
+
+// 1. Get `userId` from auth middleware.
+// 2. Fetch all likes by this user where `videoId` exists.
+// 3. Populate video details for each liked entry.
+// 4. Return array of liked video objects.
+
 const getLikedVideos = asyncHandler(async (req, res) => {
     
     const userId = req.user._id;
@@ -190,6 +216,9 @@ const getLikedVideos = asyncHandler(async (req, res) => {
 
 });
 
-
-
-export { toggleVideoLike, toggleCommentLike, toggleTweetLike, getLikedVideos };
+export { 
+    toggleVideoLike, 
+    toggleCommentLike, 
+    toggleTweetLike, 
+    getLikedVideos 
+};

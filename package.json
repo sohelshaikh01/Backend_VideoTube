@@ -1,5 +1,5 @@
 {
-  "name": "videotube",
+  "name": "videotube-backend",
   "version": "1.0.0",
   "description": "A full complex backend project",
   "main": "index.js",

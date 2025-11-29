@@ -12,8 +12,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 //    - $group: Sum views and count videos.
 
 const getChannelStats = asyncHandler(async (req, res) => {
-const channelId = req.user._id;
 
+    const channelId = req.user._id;
 
     const stats = await Video.aggregate([
         { $match: { owner: new mongoose.Types.ObjectId(channelId) } },
@@ -35,6 +35,7 @@ const channelId = req.user._id;
 // 2. Fetch videos directly.
 
 const getChannelVideos = asyncHandler(async (req, res) => {
+    
     const channelId = req.user._id;
 
     const videos = await Video.find({ owner: channelId });

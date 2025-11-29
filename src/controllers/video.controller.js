@@ -4,23 +4,17 @@ import { Video } from "../models/video.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
-
-// getAllVideos (Fetch all videos with pagination)
-//     const page = 1; // Default page number
-//     const limit = 10; // Default limit of videos per page
-
-//     const response = await fetch(`/api/videos?page=${page}&limit=${limit}`, {
-//         method: 'GET',
-//         headers: {
-//             'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Send token in the Authorization header
-//         }
-//     });
+import { uploadOnCloudinary, removeFromCloudinary } from "../utils/cloudinary.js";
 
 
 // TODO: Fetch all videos with pagination.
-// 1. Extract page and limit from req.query.
-// 2. Use $skip and $limit for pagination.
+    // 1. Extract page and limit from req.query.
+    // 2. Use $skip and $limit for pagination.
+
+// 1. Get `{ page, limit }` from query.
+// 2. Find all **published videos** with pagination.
+// 3. Return paginated array of video objects.
+
 const getAllVideos = asyncHandler(async (req, res) => {
 
     const { page = 1, limit = 10 } = req.query;
@@ -67,16 +61,22 @@ const getAllVideos = asyncHandler(async (req, res) => {
             total: videos.length,   
             page: page || 1,
             limit: limit || 10,
-        } ,  // Pagination data
+        } ,  
     ))
 
 });
 
-// publishAVideo (Publish a new video)
+
 // TODO: Publish a new video.
     // 1. Extract video details from req.body and file URLs from req.files.
     // 2. Save the video.
     // View and duration through cloudinary
+
+// 1. Get `{ title, description, file, thumbnail }` from body/files.
+// 2. Validate all required fields.
+// 3. Upload video file and thumbnail to Cloudinary.
+// 4. Create a new video document in the database.
+// 5. Return the created video.
 
 const publishAVideo = asyncHandler(async (req, res) => {
     
@@ -98,7 +98,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     const user = req.user._id;
 
-
     const video = await Video.create({
         title,
         description,
@@ -108,29 +107,23 @@ const publishAVideo = asyncHandler(async (req, res) => {
         duration: videoFile.duration,
     });
 
-    // Increament view count
-    // await Video.findByIdAndUpdate(videoId, { $inc: { view: 1 } });
-
     if(!video) {
         throw new ApiError(400, "Video Not Published!");
     }
-
 
     return res
         .status(201)
         .json(
             new ApiResponse(201, video, "Video published successfully")
-        )
-        
+        )  
 });
 
-//     const formData = new FormData();
-//     formData.append('title', videoDetails.title);
-//     formData.append('description', videoDetails.description);
-//     formData.append('videoFile', videoFile);
-//     formData.append('thumbnail', thumbnailFile);
-
 // TODO: Fetch a video by its ID.
+    // 1. Get `videoId` from request params.
+    // 2. Validate `videoId`.
+    // 3. Find video by ID and ensure it's published.
+    // 4. Return video details.
+
 const getVideoById = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params;
@@ -153,12 +146,23 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 
-//  updateVideo (Update video details)
-// const updateVideo = async (videoId, updatedDetails, updatedThumbnailFile) => {}
-
 // TODO: Update video details by ID.
-// 1. Extract videoId from req.params and updated details from req.body.
-// 2. Use $set to update the document.
+    // 1. Extract videoId from req.params and updated details from req.body.
+    // 2. Use $set to update the document.
+
+// 1. Get `{ videoId, title, description, thumbnail }` from body.
+// 2. Validate `videoId`, title/description presence.
+// 3. Find video by ID.
+// 4. If not found, return error.
+// 5. Check if current user is video owner — if not, return error.
+// 6. Update title and description.
+// 7. If thumbnail is present:
+
+//    * Delete old thumbnail from Cloudinary.
+//    * Upload new thumbnail and update URL.
+// 8. Save updated video.
+// 9. Return updated video data.
+
 const updateVideo = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params;
@@ -179,7 +183,6 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video Not Found!")
     }
 
-    // Check if the user is the owner of the video
     if (isVideo.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to update this video"); 
     }
@@ -187,7 +190,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     isVideo.title = title;
     isVideo.description = description;
 
-    // Not File Only Files is working
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path || null;
 
     if(thumbnailLocalPath) {
@@ -196,7 +198,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     await isVideo.save();
-    // if (!updatedVideo) {
     
     return res
         .status(200)
@@ -207,39 +208,53 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 });
 
-//     const formData = new FormData();
-//     formData.append('title', updatedDetails.title);
-//     formData.append('description', updatedDetails.description);
-//     formData.append('thumbnail', updatedThumbnailFile);
-
+// --- Check owner in delete
 // TODO: Delete a video by its ID.
+
+// 1. Get `videoId` from request.
+// 2. Validate `videoId`.
+// 3. Find video by ID — if not found, return error.
+// 4. Delete the video file and thumbnail from Cloudinary.
+// 5. Delete the video from database.
+// 6. Remove videoId from related models:
+//    * Comments
+//    * WatchHistory
+//    * Likes
+//    * Playlists
+// 7. Return success message or deleted video ID.
+
 const deleteVideo = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params;
 
     if(!videoId) {
-        throw new ApiError(404, "Invalid video ID format")
+        throw new ApiError(404, "Invalid video ID format");
     }
 
     const video = await Video.findByIdAndDelete(videoId).lean();
 
     if(!video) {
-        throw new ApiError(404, "Video Not Found!")
+        throw new ApiError(404, "Video Not Found!");
     }
 
     return res  
         .status(200)
         .json(
-            new ApiResponse(200, video, "Video deleted Successfully")
-        )
-
-
+            new ApiResponse(200, video, "Video deleted successfully")
+        );
 });
 
 
-// togglePublishStatus (Toggle publish status of a video)
+// --- Not used $set in 
 // TODO: Toggle publish status of a video.
-// Not used $set in 
+
+// 1. Get `videoId` from body or query.
+// 2. Validate `videoId`.
+// 3. Find video by ID.
+// 4. If not found, return error.
+// 5. Flip `isPublished` boolean.
+// 6. Save updated video.
+// 7. Return updated video data.
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
 
@@ -252,7 +267,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     const video = await Video.findById(videoId);
 
     if(!video) {
-        throw new ApiError(404, "Video not found")
+        throw new ApiError(404, "Video not found");
     }
 
     video.isPublished  = !video.isPublished;
@@ -266,10 +281,19 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
 });
 
-//     const response = await fetch(`/api/videos/toggle/publish/${videoId}`, options);
 
+// --- Check that view increment properly
+// 1. Get `videoId` and `userId`.
+// 2. Validate `videoId`.
+// 3. Increment `views` count on video document.
+// 4. If `userId` exists:
+
+//    * Add videoId to user's `watchHistory` (if not already there).
+// 5. Save video and user.
+// 6. Return updated view count or success message.
 
 const addVideoView = asyncHandler(async (req, res) => {
+
     const { videoId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
@@ -288,7 +312,8 @@ const addVideoView = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, updatedVideo, "View added successfully"));
 });
-//     const response = await fetch(`/api/videos/${videoId}/view`
+
+
 
 export {
     getAllVideos,
@@ -297,4 +322,5 @@ export {
     updateVideo,
     deleteVideo,
     togglePublishStatus,
+    addVideoView
 };

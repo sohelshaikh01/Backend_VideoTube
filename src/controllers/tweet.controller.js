@@ -53,7 +53,7 @@ const createTweet = asyncHandler(async (req, res) => {
 const getUserTweets = asyncHandler(async (req, res) => {
 
     const { userId } = req.params;
-    const { _id: ownerId } = req.user;
+    // const { _id: ownerId } = req.user;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
         throw new ApiError(400, "Invalid user ID");
@@ -112,7 +112,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 });
 
-
+// --- Also Delete comment & like related
 // TODO: Delete a tweet by its ID.
 // 1. Extract tweetId from req.params.
 // 2. Delete the document.

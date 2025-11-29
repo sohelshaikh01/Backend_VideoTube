@@ -3,6 +3,7 @@ import {verifyJWT} from "../middlewares/auth.middleware.js";
 import {upload} from "../middlewares/multer.middleware.js";
 
 import {
+    addVideoView,
     deleteVideo,
     getAllVideos,
     getVideoById,
@@ -39,5 +40,8 @@ router
     .patch(upload.single("thumbnail"), updateVideo);
 
 router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+
+// Optimization required
+router.route("/watch/:videoId").get(addVideoView);
 
 export default router;

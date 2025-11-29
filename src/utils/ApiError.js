@@ -1,5 +1,4 @@
 class ApiError extends Error {
-    // Writing and Creating API error formats
     constructor (
         statusCode,
         message= "Something went wrong",

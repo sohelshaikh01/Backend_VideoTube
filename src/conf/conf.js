@@ -4,7 +4,7 @@ const conf = {
     Mongo_URI_Local: process.env.MONGO_URI_LOCAL || "",
     Mongo_URI_Cloud: process.env.MONGO_URI_CLOUD || "",
 
-    Cors_Origin: process.env.CORS_ORIGIN || "",   
+    Cors_Origin: process.env.CORS_ORIGIN || "*",   
 
     Access_Token_Secret: process.env.ACCESS_TOKEN_SECRET || "",
     Access_Token_Expiry: process.env.ACCESS_TOKEN_EXPIRY || "",

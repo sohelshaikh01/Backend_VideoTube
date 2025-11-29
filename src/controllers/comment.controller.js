@@ -2,11 +2,12 @@ import mongoose from "mongoose";
 import {Comment} from "../models/comment.models.js";
 import {Video} from "../models/video.models.js";
 
-
 import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 
+// --- Check owner in update, delete Comment
+// --- Can user comment own video
 
 // TODO: Fetch all comments for a specific video using aggregation pipeline.
 // 1. Extract videoId from req.params and pagination details from req.query.
@@ -15,6 +16,13 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 //    - $match: Filter comments by videoId.
 //    - $lookup: Populate 'owner' details from the User collection.
 //    - $skip & $limit: Implement pagination.
+
+// 1. Get `videoId`, `page`, and `limit` from request query.
+// 2. Validate `videoId` — if invalid, return error.
+// 3. Fetch all comments for the video, with pagination and sorting (e.g., latest first).
+// 4. If comments exist, return an array of comment objects (with user and like info populated).
+// 5. Else, return an empty array.
+
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -60,10 +68,6 @@ const getVideoComments = asyncHandler(async (req, res) => {
         );
 
 });
-// Endpoint: /api/comments/:videoId
-// Method: GET
-// Authentication: Yes (JWT Token required)
-// Headers: 'Authorization': 'Bearer <token>' (stored in localStorage or cookies)
 
 
 // TODO: Add a comment to a video.
@@ -71,12 +75,19 @@ const getVideoComments = asyncHandler(async (req, res) => {
 // 2. Create and save the comment.
 
 // ---- For Now User Can Comment On Own Video ----
+
+// 1. Get `{ videoId, content }` from request body. Get `userId` from auth middleware.
+// 2. Validate all required fields — if missing, return error.
+// 3. Check if `videoId` is valid and video exists — if not, return error.
+// 4. Create a new comment document with `content`, `userId`, and `videoId`.
+// 5. If comment is created successfully, return the comment.
+
+// Anyone can comment multiple times includeing owner
+
 const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { content } = req.body;
     const userId = req.user._id;
-    // Owner cannot comment on their own video
-    // Anyone Can comment multiple times on a video
 
     if(!mongoose.Types.ObjectId.isValid(videoId)) {
         throw new ApiError(400, "Invalid video ID");
@@ -91,11 +102,6 @@ const addComment = asyncHandler(async (req, res) => {
     if(!video) {
         throw new ApiError(404, "Video not found");
     }
-
-    // User can comment on their own video
-    // if(video.owner.toString() === userId.toString()) {
-    //     throw new ApiError(400, "You cannot comment on your own video");
-    // }
    
     const comment = await Comment.create({ content, video: videoId, owner: userId });
 
@@ -109,6 +115,14 @@ const addComment = asyncHandler(async (req, res) => {
 // TODO: Update a comment by ID.
 // 1. Extract commentId from req.params and updated content from req.body.
 // 2. Update the comment.
+
+// 1. Get `{ commentId, content }` from request.
+// 2. Validate `commentId` and `content` — if missing, return error.
+// 3. Find comment by `commentId`.
+// 4. Check if logged-in user is the comment owner — if not, return error.
+// 5. Update `content` and set updated timestamp.
+// 6. Save and return the updated comment.
+
 const updateComment = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
     const { content } = req.body;
@@ -139,10 +153,19 @@ const updateComment = asyncHandler(async (req, res) => {
 
 });
 
-
+// --- Delete Likes related Comment
 // TODO: Delete a comment by ID.
 // 1. Extract commentId from req.params.
 // 2. Delete the comment.
+
+// 1. Get `commentId` from request.
+// 2. Validate `commentId` — if invalid, return error.
+// 3. Find comment by `commentId`.
+// 4. Check if current user is the comment owner — if not, return error.
+// 5. Delete the comment from database.
+// 6. Also remove the `commentId` from Likes collection.
+// 7. Return success message or deleted comment ID.
+
 const deleteComment = asyncHandler(async (req, res) => {
     
     const { commentId } = req.params;
