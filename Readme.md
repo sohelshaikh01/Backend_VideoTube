@@ -2,7 +2,9 @@
 
 ## VideoTube Video Streaming App
 
-**Workflow Model**
+Below Links are comments
+
+<!-- **Workflow Model**
 - [Model link](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj?origin=share)
 
 **Application Look & Design**
@@ -12,7 +14,7 @@
 - [Video playlist](https://www.youtube.com/watch?v=EH3vGeqeIAo&list=PLu71SKxNbfoBGh_8p_NS-ZAh6v7HhYqHW)
 
 **Official Github Repository**
-- [Upstream Repo](https://github.com/hiteshchoudhary/chai-backend.git)
+- [Upstream Repo](https://github.com/hiteshchoudhary/chai-backend.git) -->
 
 ---
 # Summary of this project
